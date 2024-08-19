@@ -1,8 +1,12 @@
 import getpass
 import hashlib
 import time
+import sys
+from pyfiglet import Figlet
+from colorama import Fore, Style
 
-password = getpass.getpass("Enter password to check: ")
+fig = Figlet(font='standard') 
+print(fig.renderText('Password Analysis'))
 
 def hash_password(password: str) -> str:
     '''
@@ -39,6 +43,7 @@ def dictionary_attack(password: str, dictionary_file: str):
             for word in dictionary_file:
                 word = word.strip()
                 hashed_word = hash_password(word)
+                
                 if hashed_word == hashed_password:
                     print(f"Password found: {word}")
                     # Record end time
@@ -55,14 +60,29 @@ def dictionary_attack(password: str, dictionary_file: str):
     print("Password not found in dictionary")
     print(f"Time taken: {end_time - start_time:.2f} seconds")
 
-def password_analysis(password: str):
+def password_analysis():
     '''
     Password analysis function that calls the dictionary_attack function
-
-    Args:
-        password (str): The password to analyze
     '''
+    password = getpass.getpass("Enter password to check: ")
+    # Dictionary attack
     dictionary_path = "rockyou.txt"
     dictionary_attack(password, dictionary_path)
 
-password_analysis(password)
+count = 1
+
+while True:
+    if count == 1:
+        password_analysis()
+        count += 1
+
+    else:
+        choice = input("Do you want to check another password? (y/n) ").lower()
+        match choice:
+            case "y":
+                password_analysis()
+            case "n":
+                print("Exiting...")
+                break
+            case _:
+                print("Invalid choice. Try again.")
