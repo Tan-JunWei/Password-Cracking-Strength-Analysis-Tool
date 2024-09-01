@@ -20,8 +20,10 @@ def hash_password(password: str) -> str:
         str: The hexadecimal representation of the hash
     '''
     hash_obj = hashlib.sha256()
+
     # Update the hash object with the password encoded to bytes
     hash_obj.update(password.encode('utf-8'))
+
     # Return the hexadecimal representation of the hash
     return hash_obj.hexdigest()
 
@@ -54,11 +56,13 @@ def dictionary_attack(password: str, dictionary_file: str):
                     # Stop the spinner animation
                     stop_event.set()
                     spinner_thread.join()
+                    
                     print(Fore.CYAN + "\nAttack complete!" + Style.RESET_ALL)
                     print(f"\nPassword found: {word}")
                     # Record end time
                     end_time = time.time()
                     print(f"Time taken: {end_time - start_time:.2f} seconds")
+
                     return True
     
     except FileNotFoundError:
@@ -72,7 +76,7 @@ def dictionary_attack(password: str, dictionary_file: str):
     spinner_thread.join()
     end_time = time.time()
     # If the password is not found in the dictionary, print a message
-    print("\nPassword not found in dictionary")
+    print(f"\n{Fore.GREEN}Password not found in dictionary" + Style.RESET_ALL)
     print(f"Time taken: {end_time - start_time:.2f} seconds")
 
 def spinner_animation(stop_event):
