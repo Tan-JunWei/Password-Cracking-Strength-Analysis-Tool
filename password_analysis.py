@@ -5,6 +5,7 @@ import sys
 from pyfiglet import Figlet
 from colorama import Fore, Style
 import threading
+import itertools
 
 fig = Figlet(font='standard') 
 print(fig.renderText('Password Analysis'))
@@ -36,7 +37,7 @@ def dictionary_attack(password: str, dictionary_file: str):
         password (str): The password to check
         dictionary_file (str): The path to the dictionary file
     '''
-    hashed_password = hash_password(password)
+    hashed_password = hash_password(password) # password is hashed and only revealed if found in dictionary
 
     # Record start time
     start_time = time.time()
@@ -72,6 +73,28 @@ def dictionary_attack(password: str, dictionary_file: str):
     print(f"Time taken: {end_time - start_time:.2f} seconds")
     return False
 
+def brute_force_attack(password: str, min_length: int, max_length: int):
+    hashed_password = hash_password(password)
+
+    character_set = "abcdefghijklmnopqrstuvwxyz0123456789" 
+
+    for password_length in range(min_length, max_length + 1):
+        # Generate all combinations for the current length
+        for combination in itertools.product(character_set, repeat=password_length):
+            attempt = ''.join(combination)  
+            print(attempt)
+            hashed_attempt = hash_password(attempt)
+
+            if hashed_attempt == hashed_password:
+                print("Password found:", attempt)
+                password_found = True
+                break 
+        else:
+            continue
+        break 
+
+    return password_found
+
 def spinner_animation(stop_event):
     spinner = ['-', '\\', '|', '/']
     while not stop_event.is_set():
@@ -87,9 +110,14 @@ def password_analysis():
     password = getpass.getpass("Enter password to check: ")
     # Dictionary attack
     dictionary_path = "rockyou.txt"
-    password_found = dictionary_attack(password, dictionary_path)
+    password_found = dictionary_attack(password, dictionary_path) 
 
-    # if 
+    if not password_found: # If password was not found in dictionary, start a brute force attack
+        # Set minimum and maximum password lengths 1-10 in this case
+        min_length = 1
+        max_length = 10
+        brute_force_attack(password, min_length, max_length)
+
     return password_found
 
 count = 0
