@@ -46,38 +46,31 @@ def dictionary_attack(password: str, dictionary_file: str):
     spinner_thread = threading.Thread(target=spinner_animation, args=(stop_event,))
     spinner_thread.start()
     
-    try:
-        with open(dictionary_file, "r", encoding="utf-8", errors="ignore") as dictionary_file:
-            for word in dictionary_file:
-                word = word.strip()
-                hashed_word = hash_password(word)
+    with open(dictionary_file, "r", encoding="utf-8", errors="ignore") as dictionary_file:
+        for index, word in enumerate(dictionary_file):
+            word = word.strip()
+            hashed_word = hash_password(word)
+            
+            if hashed_word == hashed_password:
+                # Stop the spinner animation
+                stop_event.set()
+                spinner_thread.join()
                 
-                if hashed_word == hashed_password:
-                    # Stop the spinner animation
-                    stop_event.set()
-                    spinner_thread.join()
-                    
-                    print(Fore.CYAN + "\nAttack complete!" + Style.RESET_ALL)
-                    print(f"\nPassword found: {word}")
-                    # Record end time
-                    end_time = time.time()
-                    print(f"Time taken: {end_time - start_time:.2f} seconds")
+                print(Fore.CYAN + "\nAttack complete!" + Style.RESET_ALL)
+                print(f"\nPassword found: {word} ({index +1} attempts)")
+                # Record end time
+                end_time = time.time()
+                print(f"Time taken: {end_time - start_time:.2f} seconds")
 
-                    return True
-    
-    except FileNotFoundError:
-        # If the dictionary file is not found, print an error message
-        stop_event.set()
-        spinner_thread.join()
-        print(f"\nFile not found: {dictionary_file}")
-        return False
+                return True
 
+    # If the password is not found in the dictionary
     stop_event.set()
     spinner_thread.join()
     end_time = time.time()
-    # If the password is not found in the dictionary, print a message
     print(f"\n{Fore.GREEN}Password not found in dictionary" + Style.RESET_ALL)
     print(f"Time taken: {end_time - start_time:.2f} seconds")
+    return False
 
 def spinner_animation(stop_event):
     spinner = ['-', '\\', '|', '/']
@@ -94,20 +87,25 @@ def password_analysis():
     password = getpass.getpass("Enter password to check: ")
     # Dictionary attack
     dictionary_path = "rockyou.txt"
-    return dictionary_attack(password, dictionary_path)
+    password_found = dictionary_attack(password, dictionary_path)
 
-count = 1
+    # if 
+    return password_found
 
+count = 0
 while True:
-    if count == 1:
-        if not password_analysis():
-            print("File error. Exiting...")
-            break
-        count += 1
+    if count == 0:
+        password_cracked = password_analysis()
 
-    else: 
-        choice = input("Do you want to check another password? (y/n) ").lower()
+    if password_cracked:
+        count += 1
+        choice = input("Do you want to check another password (y/n)? ").lower()
         print() 
+
+        while choice not in ["y", "n"]:
+            choice = input("Invalid choice. Do you want to check another password (y/n)? ").lower()
+            print()
+
         match choice:
             case "y":
                 password_analysis()
