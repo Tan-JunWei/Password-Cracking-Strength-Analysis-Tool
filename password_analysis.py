@@ -2,21 +2,19 @@ import getpass
 import hashlib
 import time
 import sys
-from pyfiglet import Figlet
+import pyfiglet
 from colorama import Fore, Style
 import threading
 import itertools
 
-fig = Figlet(font='standard') 
-print(fig.renderText('Password Analysis'))
+print(pyfiglet.figlet_format("Password Analysis", width=100))
 
 def hash_password(password: str) -> str:
     '''
     Hashes the given password using the specified hashing algorithm SHA-256.
-    
+
     Args:
         password (str): The password to hash
-
     Returns:
         str: The hexadecimal representation of the hash
     '''
@@ -36,6 +34,8 @@ def dictionary_attack(password: str, dictionary_file: str):
     Args:
         password (str): The password to check
         dictionary_file (str): The path to the dictionary file
+    Returns:
+        bool: True if the password is found in the dictionary, False otherwise
     '''
     hashed_password = hash_password(password) # password is hashed and only revealed if found in dictionary
     start_time = time.time()
@@ -70,6 +70,17 @@ def dictionary_attack(password: str, dictionary_file: str):
     return False
 
 def brute_force_attack(password: str, min_length: int, max_length: int):
+    '''
+    This function performs a brute force attack on the password by generating possible combinations with the given character set.
+    The character set includes lowercase alphabets and digits.
+
+    Args:
+        password (str): The password to crack
+        min_length (int): The minimum length of the password
+        max_length (int): The maximum length of the password
+    Returns:
+        bool: True if the password is found, False otherwise
+    '''
     hashed_password = hash_password(password)
     character_set = "abcdefghijklmnopqrstuvwxyz0123456789" 
     start_time = time.time()
@@ -102,23 +113,31 @@ def brute_force_attack(password: str, min_length: int, max_length: int):
     return password_found
 
 def spinner_animation(stop_event,num):
+    '''
+    This function displays a spinner animation while the dictionary attack or brute force attack is in progress.
+    '''
     spinner = ['-', '\\', '|', '/']
-    if num == 1:
-        while not stop_event.is_set():
-            for symbol in spinner:
-                sys.stdout.write(f'\r{Fore.RED}{symbol} Dictionary attack in progress...' + Style.RESET_ALL)
-                sys.stdout.flush()
-                time.sleep(0.1)
-    elif num == 2:
-        while not stop_event.is_set():
-            for symbol in spinner:
-                sys.stdout.write(f'\r{Fore.RED}{symbol} Brute force attack in progress...' + Style.RESET_ALL)
-                sys.stdout.flush()
-                time.sleep(0.1)
+    match num: 
+        case 1:
+            while not stop_event.is_set():
+                for symbol in spinner:
+                    sys.stdout.write(f'\r{Fore.RED}{symbol} Dictionary attack in progress...' + Style.RESET_ALL)
+                    sys.stdout.flush()
+                    time.sleep(0.1)
+        case 2:
+            while not stop_event.is_set():
+                for symbol in spinner:
+                    sys.stdout.write(f'\r{Fore.RED}{symbol} Brute force attack in progress...' + Style.RESET_ALL)
+                    sys.stdout.flush()
+                    time.sleep(0.1)
 
 def password_analysis():
     '''
-    Password analysis function that calls the dictionary_attack function
+    Password analysis function that calls the dictionary_attack function and the brute_force_attack
+    function if the password is not found in the dictionary.
+
+    Returns:
+        bool: True if the password is found, False otherwise
     '''
     password = getpass.getpass("Enter password to check: ")
     # Dictionary attack
