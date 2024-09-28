@@ -38,13 +38,11 @@ def dictionary_attack(password: str, dictionary_file: str):
         dictionary_file (str): The path to the dictionary file
     '''
     hashed_password = hash_password(password) # password is hashed and only revealed if found in dictionary
-
-    # Record start time
     start_time = time.time()
 
     # Create a thread to display a spinner animation
     stop_event = threading.Event()
-    spinner_thread = threading.Thread(target=spinner_animation, args=(stop_event,))
+    spinner_thread = threading.Thread(target=spinner_animation, args=(stop_event,1))
     spinner_thread.start()
     
     with open(dictionary_file, "r", encoding="utf-8", errors="ignore") as dictionary_file:
@@ -57,9 +55,8 @@ def dictionary_attack(password: str, dictionary_file: str):
                 stop_event.set()
                 spinner_thread.join()
                 
-                print(Fore.CYAN + "\nAttack complete!" + Style.RESET_ALL)
+                print(Fore.CYAN + "\nDictionary attack complete!" + Style.RESET_ALL)
                 print(f"\nPassword found: {word} ({index +1} attempts)")
-                # Record end time
                 end_time = time.time()
                 print(f"Time taken: {end_time - start_time:.2f} seconds")
 
@@ -69,24 +66,33 @@ def dictionary_attack(password: str, dictionary_file: str):
     stop_event.set()
     spinner_thread.join()
     end_time = time.time()
-    print(f"\n{Fore.GREEN}Password not found in dictionary" + Style.RESET_ALL)
-    print(f"Time taken: {end_time - start_time:.2f} seconds")
+    print(f"\n{Fore.GREEN}Password not found in dictionary. Time taken: {end_time - start_time:.2f} seconds. Trying brute force attack...\n" + Style.RESET_ALL)
     return False
 
 def brute_force_attack(password: str, min_length: int, max_length: int):
     hashed_password = hash_password(password)
-
     character_set = "abcdefghijklmnopqrstuvwxyz0123456789" 
+    start_time = time.time()
+
+    # Create a thread to display a spinner animation
+    stop_event = threading.Event()
+    spinner_thread = threading.Thread(target=spinner_animation, args=(stop_event,2))
+    spinner_thread.start()
 
     for password_length in range(min_length, max_length + 1):
         # Generate all combinations for the current length
         for combination in itertools.product(character_set, repeat=password_length):
-            attempt = ''.join(combination)  
-            print(attempt)
+            attempt = ''.join(combination)
             hashed_attempt = hash_password(attempt)
 
             if hashed_attempt == hashed_password:
+                stop_event.set()
+                spinner_thread.join()
+
+                print(Fore.CYAN + "\nBrute force attack complete!" + Style.RESET_ALL)
                 print("Password found:", attempt)
+                end_time = time.time()
+                print(f"Time taken: {end_time - start_time:.2f} seconds")
                 password_found = True
                 break 
         else:
@@ -95,13 +101,20 @@ def brute_force_attack(password: str, min_length: int, max_length: int):
 
     return password_found
 
-def spinner_animation(stop_event):
+def spinner_animation(stop_event,num):
     spinner = ['-', '\\', '|', '/']
-    while not stop_event.is_set():
-        for symbol in spinner:
-            sys.stdout.write(f'\r{Fore.RED}{symbol} Dictionary attack in progress...' + Style.RESET_ALL)
-            sys.stdout.flush()
-            time.sleep(0.1)
+    if num == 1:
+        while not stop_event.is_set():
+            for symbol in spinner:
+                sys.stdout.write(f'\r{Fore.RED}{symbol} Dictionary attack in progress...' + Style.RESET_ALL)
+                sys.stdout.flush()
+                time.sleep(0.1)
+    elif num == 2:
+        while not stop_event.is_set():
+            for symbol in spinner:
+                sys.stdout.write(f'\r{Fore.RED}{symbol} Brute force attack in progress...' + Style.RESET_ALL)
+                sys.stdout.flush()
+                time.sleep(0.1)
 
 def password_analysis():
     '''
