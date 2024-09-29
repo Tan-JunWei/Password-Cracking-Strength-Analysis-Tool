@@ -9,6 +9,7 @@ import itertools
 import re
 import math
 
+count = 0
 print(pyfiglet.figlet_format("Password Analysis", width=100))
 
 def hash_password(password: str) -> str:
@@ -28,13 +29,17 @@ def hash_password(password: str) -> str:
     # Return the hexadecimal representation of the hash
     return hash_obj.hexdigest()
 
-def password_strength(password: str) -> str:
+def password_entropy(password: str) -> str:
     '''
-    Password entropy formula:
+    Calculates the password entropy using the formula:
+    
     E = log2(R^L)
     where E is the password entropy
           R is the possible range of character types in the password
           L is the length of the password
+    
+    Args:
+        password (str): The password to calculate the entropy for
     '''
     password_length = len(password)
     possible_pool_size = 0
@@ -50,7 +55,11 @@ def password_strength(password: str) -> str:
         possible_pool_size += 32
     
     password_entropy = password_length * math.log2(possible_pool_size)
-    return password_entropy
+
+    print("\nPassword analysis for: " + Fore.CYAN + password + Style.RESET_ALL)
+    print(f"Password length: {password_length}")
+    print(f"Possible pool size: {possible_pool_size}")
+    print(f"Password entropy: {password_entropy:.2f} bits\n")
 
 def dictionary_attack(password: str, dictionary_file: str):
     '''
@@ -82,7 +91,7 @@ def dictionary_attack(password: str, dictionary_file: str):
                 spinner_thread.join()
                 
                 print(Fore.CYAN + "\nDictionary attack complete!" + Style.RESET_ALL)
-                print("\nPassword found: {word} ({index +1:,} attempts)")
+                print(f"\nPassword found: {word} ({index +1:,} attempts)")
                 end_time = time.time()
                 print(f"Time taken: {end_time - start_time:.2f} seconds")
 
@@ -167,8 +176,7 @@ def password_analysis():
     Returns:
         bool: True if the password is found, False otherwise
     '''
-    password = getpass.getpass("Enter password to check: ")
-    # Dictionary attack
+    password = getpass.getpass("\nEnter password to check: ")
     dictionary_path = "rockyou.txt"
     password_found = dictionary_attack(password, dictionary_path) 
 
@@ -180,25 +188,42 @@ def password_analysis():
 
     return password_found
 
-count = 0
 while True:
-    if count == 0:
-        password_cracked = password_analysis()
+    print("What would you like to do?")
+    print("1. Analyse password")
+    print("2. Execute password attack")
+    print("3. Exit")
+    user_choice = input("Enter your choice: ")
 
-    if password_cracked:
-        count += 1
-        choice = input("Do you want to check another password (y/n)? ").lower()
-        print() 
+    match user_choice:
+        case "1":
+            password = getpass.getpass("\nEnter password to check: ")
+            password_entropy(password)
 
-        while choice not in ["y", "n"]:
-            choice = input("Invalid choice. Do you want to check another password (y/n)? ").lower()
-            print()
+        case "2":
+            if count == 0:
+                password_cracked = password_analysis()
 
-        match choice:
-            case "y":
-                password_analysis()
-            case "n":
-                print("Exiting...")
-                break
-            case _:
-                print("Invalid choice. Try again.")
+            if password_cracked:
+                count += 1
+                choice = input("Do you want to check another password (y/n)? ").lower()
+                print() 
+
+                while choice not in ["y", "n"]:
+                    choice = input("Invalid choice. Do you want to check another password (y/n)? ").lower()
+                    print()
+
+                match choice:
+                    case "y":
+                        password_analysis()
+                    case "n":
+                        print("Exiting...")
+                        break
+                    case _:
+                        print("Invalid choice. Try again.")
+
+        case "3":
+            break
+
+        case _:
+            print("Invalid choice. Try again.\n")
