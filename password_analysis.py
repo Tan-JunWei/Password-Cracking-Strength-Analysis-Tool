@@ -6,6 +6,8 @@ import pyfiglet
 from colorama import Fore, Style
 import threading
 import itertools
+import re
+import math
 
 print(pyfiglet.figlet_format("Password Analysis", width=100))
 
@@ -25,6 +27,30 @@ def hash_password(password: str) -> str:
 
     # Return the hexadecimal representation of the hash
     return hash_obj.hexdigest()
+
+def password_strength(password: str) -> str:
+    '''
+    Password entropy formula:
+    E = log2(R^L)
+    where E is the password entropy
+          R is the possible range of character types in the password
+          L is the length of the password
+    '''
+    password_length = len(password)
+    possible_pool_size = 0
+
+    # r"" prefix specifies a raw string literal in Python
+    if re.search(r"\d", password): # contains digits
+        possible_pool_size += 10
+    if re.search(r"[a-z]", password):
+        possible_pool_size += 26
+    if re.search(r"[A-Z]", password):
+        possible_pool_size += 26
+    if re.search(r"\W", password):
+        possible_pool_size += 32
+    
+    password_entropy = password_length * math.log2(possible_pool_size)
+    return password_entropy
 
 def dictionary_attack(password: str, dictionary_file: str):
     '''
@@ -56,7 +82,7 @@ def dictionary_attack(password: str, dictionary_file: str):
                 spinner_thread.join()
                 
                 print(Fore.CYAN + "\nDictionary attack complete!" + Style.RESET_ALL)
-                print(f"\nPassword found: {word} ({index +1} attempts)")
+                print("\nPassword found: {word} ({index +1:,} attempts)")
                 end_time = time.time()
                 print(f"Time taken: {end_time - start_time:.2f} seconds")
 
@@ -66,7 +92,7 @@ def dictionary_attack(password: str, dictionary_file: str):
     stop_event.set()
     spinner_thread.join()
     end_time = time.time()
-    print(f"\n{Fore.GREEN}Password not found in dictionary. Time taken: {end_time - start_time:.2f} seconds. Trying brute force attack...\n" + Style.RESET_ALL)
+    print(f"\n{Fore.GREEN}Password not found in dictionary. Time taken: {end_time - start_time:.2f} seconds ({index+1:,} attempts). Trying brute force attack...\n" + Style.RESET_ALL)
     return False
 
 def brute_force_attack(password: str, min_length: int, max_length: int):
@@ -81,8 +107,9 @@ def brute_force_attack(password: str, min_length: int, max_length: int):
     Returns:
         bool: True if the password is found, False otherwise
     '''
-    hashed_password = hash_password(password)
-    character_set = "abcdefghijklmnopqrstuvwxyz0123456789" 
+    hashed_password = hash_password(password.lower())
+    character_set = "abcdefghijklmnopqrstuvwxyz0123456789"
+    count = 0
     start_time = time.time()
 
     # Create a thread to display a spinner animation
@@ -95,17 +122,18 @@ def brute_force_attack(password: str, min_length: int, max_length: int):
         for combination in itertools.product(character_set, repeat=password_length):
             attempt = ''.join(combination)
             hashed_attempt = hash_password(attempt)
+            count += 1
 
             if hashed_attempt == hashed_password:
                 stop_event.set()
                 spinner_thread.join()
 
                 print(Fore.CYAN + "\nBrute force attack complete!" + Style.RESET_ALL)
-                print("Password found:", attempt)
+                print("Password found:", password)
                 end_time = time.time()
-                print(f"Time taken: {end_time - start_time:.2f} seconds")
+                print(f"Time taken: {end_time - start_time:.2f} seconds ({count:,} attempts)")
                 password_found = True
-                break 
+                break
         else:
             continue
         break 
@@ -145,10 +173,10 @@ def password_analysis():
     password_found = dictionary_attack(password, dictionary_path) 
 
     if not password_found: # If password was not found in dictionary, start a brute force attack
-        # Set minimum and maximum password lengths 1-10 in this case
+        # Set minimum and maximum password lengths (1-10) in this case
         min_length = 1
         max_length = 10
-        brute_force_attack(password, min_length, max_length)
+        password_found = brute_force_attack(password, min_length, max_length)
 
     return password_found
 
